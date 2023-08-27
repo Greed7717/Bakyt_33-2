@@ -1,6 +1,5 @@
 import sqlite3
 
-# Создание базы данных и таблицы
 def create_database():
     conn = sqlite3.connect('hw.db')
     cursor = conn.cursor()
@@ -17,7 +16,6 @@ def create_database():
     conn.commit()
     conn.close()
 
-# Добавление 15 различных товаров
 def add_sample_products():
     products = [
         ("Жидкое мыло с запахом ванили", 150.99, 10),
