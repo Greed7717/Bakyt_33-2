@@ -1,0 +1,67 @@
+import sqlite3
+
+conn = sqlite3.connect("geography.db")
+cursor = conn.cursor()
+
+cursor.execute('''CREATE TABLE IF NOT EXISTS countries (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    title TEXT NOT NULL
+                )''')
+
+countries_data = [("Кыргызстан",), ("Германия",), ("Китай",)]
+cursor.executemany("INSERT INTO countries (title) VALUES (?)", countries_data)
+
+cursor.execute('''CREATE TABLE IF NOT EXISTS cities (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    title TEXT NOT NULL,
+                    area REAL DEFAULT 0,
+                    country_id INTEGER,
+                    FOREIGN KEY (country_id) REFERENCES countries(id)
+                )''')
+
+cities_data = [("Бишкек", 128.9, 1), ("Ош", 130.5, 1), ("Берлин", 891.8, 2), ("Пекин", 16410.5, 3)]
+cursor.executemany("INSERT INTO cities (title, area, country_id) VALUES (?, ?, ?)", cities_data)
+
+cursor.execute('''CREATE TABLE IF NOT EXISTS employees (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    first_name TEXT NOT NULL,
+                    last_name TEXT NOT NULL,
+                    city_id INTEGER,
+                    FOREIGN KEY (city_id) REFERENCES cities(id)
+                )''')
+
+employees_data = [
+    ("Асан", "Аалиев", 1),
+    ("Санжар", "Мамытов", 2),
+    ("Алина", "Кадырбекова", 3),
+    ("Айсулу", "Мэлисова", 4),
+]
+cursor.executemany("INSERT INTO employees (first_name, last_name, city_id) VALUES (?, ?, ?)", employees_data)
+
+conn.commit()
+
+while True:
+    print(
+        "Вы можете отобразить список сотрудников по выбранному id города из перечня городов ниже, для выхода введите 0:")
+    cursor.execute("SELECT id, title FROM cities")
+    cities = cursor.fetchall()
+    for city in cities:
+        print(f"{city[0]}. {city[1]}")
+
+    city_id = int(input())
+
+    if city_id == 0:
+        break
+
+    cursor.execute('''SELECT e.first_name, e.last_name, c.title, ct.title, ct.area
+                    FROM employees e
+                    JOIN cities ct ON e.city_id = ct.id
+                    JOIN countries c ON ct.country_id = c.id
+                    WHERE ct.id = ?''', (city_id,))
+
+    city_employees = cursor.fetchall()
+    for employee in city_employees:
+        print(
+            f"Имя: {employee[0]}, Фамилия: {employee[1]}, Страна: {employee[2]}, Город: {employee[3]}, Площадь города: {employee[4]}")
+
+conn.close()
